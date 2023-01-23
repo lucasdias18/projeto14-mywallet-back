@@ -127,8 +127,13 @@ app.post('/nova-entrada', async (req,res) => {
             const err = error.details.map((e) => e.message)
             return res.status(422).send(err)
         }
+
+        const findUser = await db.collection("sessions").findOne({ token })
+
+        const user = await db.collection("users").findOne({_id: findUser.userId})
+
         const day = dayjs().format("DD/MM")
-        const registro = {...entrada, day}
+        const registro = {...entrada, day, user: user.name}
         await db.collection("entradas").insertOne(registro)
         res.send(registro)
     }
@@ -162,8 +167,12 @@ app.post('/nova-saida', async (req,res) => {
             return res.status(422).send(err)
         }
 
+        const findUser = await db.collection("sessions").findOne({ token })
+
+        const user = await db.collection("users").findOne({_id: findUser.userId})
+
         const day = dayjs().format("DD/MM")
-        const registro = {...saida, day}
+        const registro = {...saida, day, user: user.name }
         await db.collection("saidas").insertOne(registro)
         res.send(registro)
     }
@@ -184,10 +193,14 @@ app.get('/home', async (req, res) => {
         const session = await db.collection("sessions").findOne({ token })
             
         if (!session) return res.sendStatus(401)
+
+        const findUser = await db.collection("sessions").findOne({ token })
+
+        const user = await db.collection("users").findOne({_id: findUser.userId})
         
         
-        const resp_saida = await db.collection("saidas").find().toArray()
-        const resp_entrada = await db.collection("entradas").find().toArray()
+        const resp_saida = await db.collection("saidas").find({ user: user.name }).toArray()
+        const resp_entrada = await db.collection("entradas").find({ user: user.name }).toArray()
 
         let valor_saida = 0
         let valor_entrada = 0
