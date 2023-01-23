@@ -111,22 +111,21 @@ app.post('/sign-up', async (req, res) => {
 
 app.post('/nova-entrada', async (req,res) => {
     const { valueE, description } = req.body
+    const { authorization } = req.headers
+    const token = authorization?.replace('Bearer ', '')
 
     const entradaSchema = joi.object({
         valueE: joi.string().alphanum().required(),
         description: joi.string().required()
     })
 
-    const { authorization } = req.headers
-    const token = authorization?.replace('Bearer ', '')
-
     try {
 
-        if(!token) return res.sendStatus(401)
+        if(!token) return res.status(401).send('token não existe')
 
         const session = await db.collection("sessions").findOne({ token })
             
-        if (!session) return res.sendStatus(401)
+        if (!session) return res.status(401).send('acesso não permitido')
 
         const { error, value: entrada } = entradaSchema.validate({ valueE, description }, { abortEarly: false })
         
@@ -147,13 +146,13 @@ app.post('/nova-entrada', async (req,res) => {
 
 app.post('/nova-saida', async (req,res) => {
     const { valueS, description } = req.body
+    const { authorization } = req.headers
+    const token = authorization?.replace('Bearer ', '')
 
     const saidaSchema = joi.object({
         valueS: joi.string().alphanum().required(),
         description: joi.string().required()
     })
-    const { authorization } = req.headers
-    const token = authorization?.replace('Bearer ', '')
 
     try {
 
@@ -219,7 +218,20 @@ app.get('/home', async (req, res) => {
         const resp_saida = await db.collection("saidas").find().toArray()
         const resp_entrada = await db.collection("entradas").find().toArray()
 
-        res.send([...resp_saida, ...resp_entrada])
+        let valor_saida = 0
+        let valor_entrada = 0
+
+        for (let i=0; i<resp_saida.length; i++) {
+            valor_saida += resp_saida[i].valueS
+        }
+
+        for (let i=0; i<resp_entrada.length; i++) {
+            valor_entrada += resp_entrada[i].valueE
+        }
+
+        const saldo = valor_entrada - valor_saida
+
+        res.send([...resp_saida, ...resp_entrada, {total: saldo}])
     }
     catch {
 
