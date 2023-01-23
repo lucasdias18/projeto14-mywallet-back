@@ -109,7 +109,7 @@ app.post('/nova-entrada', async (req,res) => {
     const token = authorization?.replace('Bearer ', '')
 
     const entradaSchema = joi.object({
-        valueE: joi.string().alphanum().required(),
+        valueE: joi.number().required(),
         description: joi.string().required()
     })
 
@@ -144,7 +144,7 @@ app.post('/nova-saida', async (req,res) => {
     const token = authorization?.replace('Bearer ', '')
 
     const saidaSchema = joi.object({
-        valueS: joi.string().alphanum().required(),
+        valueS: joi.number().required(),
         description: joi.string().required()
     })
 
@@ -203,7 +203,7 @@ app.get('/home', async (req, res) => {
 
         const saldo = valor_entrada - valor_saida
 
-        res.send([...resp_saida, ...resp_entrada, {total: saldo}])
+        res.send([...resp_saida, ...resp_entrada, {total: saldo.toFixed(2)}])
     }
     catch {
 
