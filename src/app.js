@@ -46,17 +46,12 @@ app.post('/login', async (req, res) => {
         }
 
         const existsUser = await db.collection("users").findOne({ email })
-        // console.log(existsUser)
-        console.log(bcrypt.compareSync(password, existsUser.passwordHash))
-        console.log(user)
 
         if(!existsUser || bcrypt.compareSync(password, existsUser.passwordHash) === false) return res.status(409).send("Usuário ou senha incorretos!")
 
         const token = uuid();
-        console.log(token)
 
         const findUser = await db.collection("users").findOne({ email })
-        console.log(findUser)
         await db.collection("sessions").insertOne({
             userId: findUser._id,
             token
@@ -94,7 +89,6 @@ app.post('/sign-up', async (req, res) => {
         const existsUser = await db.collection("users").findOne({ email })
 
         if (existsUser) return res.status(409).send('Usuário já cadastrado!')
-        // console.log(existsUser)
 
         const passwordHash = bcrypt.hashSync(password, 10);
 
@@ -179,29 +173,6 @@ app.post('/nova-saida', async (req,res) => {
 
 })
 
-// app.get('/saidas', async (req, res) => {
-//     const { authorization } = req.headers
-//     const token = authorization?.replace('Bearer ', '')
-
-//     try {
-
-//         if(!token) return res.sendStatus(401)
-
-//         const session = await db.collection("sessions").findOne({ token })
-            
-//         if (!session) return res.sendStatus(401)
-        
-        
-//         const resp_saida = await db.collection("saidas").find().toArray()
-//         // const resp_entrada = await db.collection("entradas").find().toArray()
-
-//         res.send(resp_saida)
-//     }
-//     catch {
-
-//     }
-// })
-
 app.get('/home', async (req, res) => {
     const { authorization } = req.headers
     const token = authorization?.replace('Bearer ', '')
@@ -222,12 +193,13 @@ app.get('/home', async (req, res) => {
         let valor_entrada = 0
 
         for (let i=0; i<resp_saida.length; i++) {
-            valor_saida += resp_saida[i].valueS
+            valor_saida += Number(resp_saida[i].valueS)
         }
 
         for (let i=0; i<resp_entrada.length; i++) {
-            valor_entrada += resp_entrada[i].valueE
+            valor_entrada += Number(resp_entrada[i].valueE)
         }
+
 
         const saldo = valor_entrada - valor_saida
 
@@ -250,9 +222,7 @@ app.get('/user', async (req, res) => {
             
         if (!session) return res.sendStatus(401)
         
-        
         const findUser = await db.collection("sessions").findOne({ token })
-        console.log(findUser.userId)
 
         const user = await db.collection("users").findOne({_id: findUser.userId})
 
